@@ -118,6 +118,7 @@ public class Apriori extends Configured implements Tool {
 	public static void main(final String[] args) throws Exception {
 		if (args.length < 2) {
 			System.err.println("Not enough arguments. Add input and output directories");
+			System.exit(1);
 		}
 		System.out.println("Starting new apriori job");
 		final int res = ToolRunner.run(new Configuration(), new Apriori(), args);
