@@ -45,7 +45,11 @@ public class AprioriReducer extends Reducer<Text, IntWritable, Text, NullWritabl
 		if (iteration == 1) {
 			for (int i = 0; i < largeItemsets.size(); i++) {
 				for (int j = i + 1; j < largeItemsets.size(); j++) {
-					candidateItems.add(new String[] { largeItemsets.get(i)[0], largeItemsets.get(j)[0] });
+					if (Integer.valueOf(largeItemsets.get(i)[0]) < Integer.valueOf(largeItemsets.get(j)[0])) {
+						candidateItems.add(new String[] { largeItemsets.get(i)[0], largeItemsets.get(j)[0] });
+					} else {
+						candidateItems.add(new String[] { largeItemsets.get(j)[0], largeItemsets.get(i)[0] });
+					}
 				}
 			}
 		} else {
