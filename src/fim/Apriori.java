@@ -26,8 +26,6 @@ import org.apache.hadoop.util.ToolRunner;
  */
 public class Apriori extends Configured implements Tool {
 
-	public static final String candidatesFile = "candidates.txt";
-
 	private final boolean debug;
 	private boolean running = true;
 	private int iteration = 1;
@@ -72,8 +70,8 @@ public class Apriori extends Configured implements Tool {
 			job.setJarByClass(Apriori.class);
 
 			if (iteration > 1) {
-				DistributedCache.createSymlink(conf);
-				DistributedCache.addCacheFile(new URI(outputBaseDir + "/Apriori-" + iteration + "/part-00000#" + candidatesFile), conf);
+				final URI uri = new URI(outputBaseDir + "/Apriori-" + (iteration - 1) + "/part-r-00000");
+				DistributedCache.addCacheFile(uri, job.getConfiguration());
 			}
 
 			// Setup mapper and reducer

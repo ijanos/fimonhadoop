@@ -40,22 +40,30 @@ public class AprioriMapper extends Mapper<LongWritable, Text, Text, IntWritable>
 			return;
 		}
 
-		BufferedReader reader;
+		BufferedReader reader = null;
 		String currentLine;
 		candidateTrie = new CandidateTrie<String>();
-
+		final Path[] localCacheFiles = DistributedCache.getLocalCacheFiles(context.getConfiguration());
+		if (localCacheFiles.length < 1) {
+			throw new IOException("Could not read candidates file");
+		}
 		try {
-			reader = new BufferedReader(new FileReader(Apriori.candidatesFile));
+			reader = new BufferedReader(new FileReader(localCacheFiles[0].toString()));
 			while ((currentLine = reader.readLine()) != null) {
 				candidateTrie.insert(space.split(currentLine.trim()), 0);
 			}
 		} catch (final FileNotFoundException e) {
 			System.err.println("Could not open the candidates file");
-			e.printStackTrace();
+			throw e;
 		} catch (final IOException e) {
 			System.err.println("Error during reading candidates file");
-			e.printStackTrace();
+			throw e;
+		} finally {
+			if (reader != null) {
+				reader.close();
+			}
 		}
+
 	}
 
 	@Override
