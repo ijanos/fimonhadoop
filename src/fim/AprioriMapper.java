@@ -83,7 +83,9 @@ public class AprioriMapper extends Mapper<LongWritable, Text, Text, IntWritable>
 	@Override
 	protected void cleanup(final Context context) throws IOException, InterruptedException {
 		// Write the candidate trie to the output
-		traverse(new ArrayList<String>(), candidateTrie, context);
+		if (!firstRun) {
+			traverse(new ArrayList<String>(), candidateTrie, context);
+		}
 	}
 
 	public void traverse(final List<String> path, final CandidateTrie<String> node, final Context context) throws IOException, InterruptedException {
