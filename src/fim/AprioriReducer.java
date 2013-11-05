@@ -53,9 +53,18 @@ public class AprioriReducer extends Reducer<Text, IntWritable, Text, NullWritabl
 				for (int j = i + 1; j < largeItemsets.size(); j++) {
 					final String[] itemset1 = largeItemsets.get(i);
 					final String[] itemset2 = largeItemsets.get(j);
-					if (Arrays.equals(Arrays.copyOfRange(itemset1, 0, itemset1.length - 2), Arrays.copyOfRange(largeItemsets.get(j), 0, itemset2.length - 2))) {
-						final String[] candidate = Arrays.copyOf(itemset1, itemset1.length + 1);
-						candidate[itemset1.length] = itemset2[itemset2.length - 1];
+					if (compareArrays(itemset1, itemset2)) {
+						final String[] itemset;
+						final String item;
+						if (Integer.valueOf(itemset1[itemset1.length - 1]) < Integer.valueOf(itemset2[itemset2.length - 1])) {
+							itemset = itemset1;
+							item = itemset2[itemset2.length - 1];
+						} else {
+							itemset = itemset2;
+							item = itemset1[itemset1.length - 1];
+						}
+						final String[] candidate = Arrays.copyOf(itemset, itemset.length + 1);
+						candidate[itemset.length] = item;
 						candidateItems.add(candidate);
 					}
 				}
@@ -69,4 +78,29 @@ public class AprioriReducer extends Reducer<Text, IntWritable, Text, NullWritabl
 			}
 		}
 	}
+
+	/**
+	 * 
+	 * @param arr1
+	 *            Array 1
+	 * @param arr2
+	 *            Array 2
+	 * @return true if the the arrays first n-1 elements are the same where n is
+	 *         the array length.
+	 */
+	private boolean compareArrays(final String[] arr1, final String[] arr2) {
+		if (arr1.length != arr2.length) {
+			System.err.println("Array size does not match. This should not happen!");
+			return false;
+		}
+		boolean result = true;
+		for (int i = 0; i < arr1.length - 1; i++) {
+			if (!arr1[i].equals(arr2[i])) {
+				result = false;
+				break;
+			}
+		}
+		return result;
+	}
+
 }
