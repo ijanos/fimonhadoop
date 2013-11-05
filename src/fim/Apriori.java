@@ -29,7 +29,7 @@ public class Apriori extends Configured implements Tool {
 	public static final String candidatesFile = "candidates.txt";
 
 	private final boolean debug;
-	private boolean run = true;
+	private boolean running = true;
 	private int iteration = 1;
 
 	public static enum FinishedCounter {
@@ -64,7 +64,7 @@ public class Apriori extends Configured implements Tool {
 			hdfs.delete(outputBasePath, true);
 		}
 
-		while (run) {
+		while (running) {
 			conf.setInt("apriori.iteration", iteration);
 
 			// Create a new job
@@ -106,7 +106,7 @@ public class Apriori extends Configured implements Tool {
 			// it is finished and we can stop the iterations of the algorithm.
 			final long finished = job.getCounters().findCounter(FinishedCounter.FINISHED).getValue();
 			if (finished > 0) {
-				run = false;
+				running = false;
 			}
 
 			iteration++;
