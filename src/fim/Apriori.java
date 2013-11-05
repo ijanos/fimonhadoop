@@ -2,6 +2,8 @@ package fim;
 
 import java.net.URI;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.conf.Configured;
 import org.apache.hadoop.filecache.DistributedCache;
@@ -26,6 +28,8 @@ import org.apache.hadoop.util.ToolRunner;
  * 
  */
 public class Apriori extends Configured implements Tool {
+
+	private static final Log LOG = LogFactory.getLog(Apriori.class);
 
 	private final boolean debug;
 	private boolean running = true;
@@ -95,9 +99,13 @@ public class Apriori extends Configured implements Tool {
 			FileOutputFormat.setOutputPath(job, outputDir);
 			job.setOutputFormatClass(TextOutputFormat.class);
 
+			LOG.info("Starting Apriori iteration " + iteration);
+			LOG.info("Input path: " + inputPath);
+			LOG.info("Output path: " + outputDir);
+
 			final boolean success = job.waitForCompletion(true);
 			if (!success) {
-				System.err.println("Hadoop iteration job failed. Aborting the Apriori cumputation");
+				LOG.error("Hadoop iteration job failed. Aborting the Apriori cumputation");
 				return 1;
 			}
 
