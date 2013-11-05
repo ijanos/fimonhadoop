@@ -53,8 +53,8 @@ public class Apriori extends Configured implements Tool {
 		String outputBaseDir = args[1];
 
 		// Remove trailing slash from output directory path if present
-		if (outputBaseDir.substring(outputBaseDir.length() - 1) == "/") {
-			outputBaseDir = outputBaseDir.substring(0, outputBaseDir.length() - 2);
+		if (outputBaseDir.substring(outputBaseDir.length() - 1).equals("/")) {
+			outputBaseDir = outputBaseDir.substring(0, outputBaseDir.length() - 1);
 		}
 
 		// Delete the output directory if exists
