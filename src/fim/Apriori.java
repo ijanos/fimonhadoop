@@ -26,15 +26,15 @@ import org.apache.hadoop.util.ToolRunner;
  */
 public class Apriori extends Configured implements Tool {
 
+	public static final String candidatesFile = "candidates.txt";
+
+	private final boolean debug;
+	private boolean run = true;
+	private int iteration = 1;
+
 	public static enum FinishedCounter {
 		FINISHED
 	}
-
-	public static final String candidatesFile = "candidates.txt";
-
-	protected final boolean debug;
-	protected boolean run = true;
-	protected int iteration = 1;
 
 	public Apriori() {
 		debug = true;
@@ -72,7 +72,7 @@ public class Apriori extends Configured implements Tool {
 			job.setJarByClass(Apriori.class);
 
 			if (iteration > 1) {
-				DistributedCache.createSymlink(conf); //
+				DistributedCache.createSymlink(conf);
 				DistributedCache.addCacheFile(new URI(outputBaseDir + "/Apriori-" + iteration + "/part-00000#" + candidatesFile), conf);
 			}
 
