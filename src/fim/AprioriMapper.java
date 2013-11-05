@@ -75,7 +75,7 @@ public class AprioriMapper extends Mapper<LongWritable, Text, Text, IntWritable>
 				context.write(new Text(items[i]), new IntWritable(1));
 			}
 		} else {
-			incrementCount(candidateTrie, Arrays.copyOfRange(items, 1, items.length - 1), iteration);
+			incrementCount(candidateTrie, Arrays.copyOfRange(items, 1, items.length), iteration);
 			context.progress();
 		}
 	}
@@ -108,7 +108,7 @@ public class AprioriMapper extends Mapper<LongWritable, Text, Text, IntWritable>
 		if (depth > 1) {
 			for (int i = 0; i < items.length; i++) {
 				if (trie.contains(items[i])) {
-					incrementCount(trie.get(items[i]), Arrays.copyOfRange(items, i + 1, items.length - 1), depth - 1);
+					incrementCount(trie.get(items[i]), Arrays.copyOfRange(items, i + 1, items.length), depth - 1);
 				}
 			}
 		} else {
