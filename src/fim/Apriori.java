@@ -7,6 +7,7 @@ import org.apache.hadoop.conf.Configured;
 import org.apache.hadoop.filecache.DistributedCache;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
+import org.apache.hadoop.io.IntWritable;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.mapreduce.lib.input.FileInputFormat;
@@ -80,7 +81,7 @@ public class Apriori extends Configured implements Tool {
 
 			// Specify key / value
 			job.setOutputKeyClass(Text.class);
-			job.setOutputValueClass(Text.class);
+			job.setOutputValueClass(IntWritable.class);
 
 			// Limit to 1 reducer
 			job.setNumReduceTasks(1);
