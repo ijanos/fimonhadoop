@@ -9,6 +9,8 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.regex.Pattern;
 
+import org.apache.hadoop.filecache.DistributedCache;
+import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.io.IntWritable;
 import org.apache.hadoop.io.LongWritable;
 import org.apache.hadoop.io.Text;
@@ -23,8 +25,9 @@ public class AprioriMapper extends Mapper<LongWritable, Text, Text, IntWritable>
 	private int iteration;
 
 	@Override
-	public void setup(final Context context) {
+	public void setup(final Context context) throws IOException {
 		iteration = context.getConfiguration().getInt("apriori.iteration", -1);
+
 		switch (iteration) {
 		case -1:
 			System.err.println("Cannot get apriori.iteration");
