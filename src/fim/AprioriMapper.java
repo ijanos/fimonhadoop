@@ -30,8 +30,7 @@ public class AprioriMapper extends Mapper<LongWritable, Text, Text, IntWritable>
 
 		switch (iteration) {
 		case -1:
-			System.err.println("Cannot get apriori.iteration");
-			break;
+			throw new IOException("Cannot get apriori.iteration");
 		case 1:
 			firstRun = true;
 			break;

@@ -31,26 +31,48 @@ public class Apriori extends Configured implements Tool {
 
 	private static final Log LOG = LogFactory.getLog(Apriori.class);
 
-	private final boolean debug;
 	private boolean running = true;
 	private int iteration = 1;
+	private float minsup;
+	private int numberOfBaskets;
 
 	public static enum FinishedCounter {
 		FINISHED
 	}
 
-	public Apriori() {
-		debug = true;
+	public int calcuateMinsup(final int numberOfItems, final float minsupPercent) {
+		final float result = numberOfItems * minsupPercent;
+		return Math.round(result);
+	}
+
+	public void loadSettings(final Configuration conf) {
+		if (conf.getInt("apriori.debug", 0) != 0) {
+			// Use the LocalJobRunner, the mapper and reducer will run in the
+			// main JVM. This way we can see standard input and output messages
+			LOG.info("DEBUG is enabled. Running on LocalJobRunner");
+			conf.set("mapred.job.tracker", "local");
+		}
+		minsup = conf.getFloat("apriori.minsup", 0);
+		numberOfBaskets = conf.getInt("apriori.baskets", 0);
+		if (minsup == 0) {
+			LOG.error("Provide minimum support percentage. Example: -D apriori.minsup=0.02");
+			running = false;
+		}
+		if (numberOfBaskets == 0) {
+			LOG.error("Provide the number of baskets. Example: -D apriori.baskets=100000");
+			running = false;
+		}
+
+		LOG.info("Minimum support is " + minsup);
+		LOG.info("Number of baskets is " + numberOfBaskets);
 	}
 
 	public int run(final String[] args) throws Exception {
 		final Configuration conf = getConf();
 
-		if (debug) {
-			// Limit the job to the machine it was started on.
-			// This way we can see standard input and output messages
-			conf.set("mapred.job.tracker", "local");
-		}
+		loadSettings(conf);
+
+		conf.setInt("apriori.reducer.minsup", calcuateMinsup(numberOfBaskets, minsup));
 
 		final Path inputPath = new Path(args[0]);
 		String outputBaseDir = args[1];

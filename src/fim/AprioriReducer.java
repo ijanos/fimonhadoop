@@ -6,6 +6,8 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.regex.Pattern;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.io.IntWritable;
 import org.apache.hadoop.io.NullWritable;
 import org.apache.hadoop.io.Text;
@@ -13,6 +15,8 @@ import org.apache.hadoop.mapreduce.Reducer;
 import org.apache.hadoop.util.StringUtils;
 
 public class AprioriReducer extends Reducer<Text, IntWritable, Text, NullWritable> {
+
+	private static final Log LOG = LogFactory.getLog(AprioriReducer.class);
 
 	private final Pattern space = Pattern.compile(" ");
 	private int minsup;
@@ -23,7 +27,15 @@ public class AprioriReducer extends Reducer<Text, IntWritable, Text, NullWritabl
 	@Override
 	protected void setup(final Context context) throws IOException, InterruptedException {
 		iteration = context.getConfiguration().getInt("apriori.iteration", -1);
+		minsup = context.getConfiguration().getInt("apriori.reducer.minsup", -1);
+		if (minsup < 0) {
+			throw new IOException("Reducer could not read minimum support.");
+		} else if (iteration < 0) {
+			throw new IOException("Reducer could not read iteration.");
+		}
+
 		largeItemsets = new ArrayList<String[]>();
+		LOG.info("Starting Apriori Reducer. Iteration: " + iteration + " and minum support: " + minsup);
 	}
 
 	@Override
