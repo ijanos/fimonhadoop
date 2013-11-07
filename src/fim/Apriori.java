@@ -34,13 +34,13 @@ public class Apriori extends Configured implements Tool {
 	private boolean running = true;
 	private int iteration = 1;
 	private float minsup;
-	private int numberOfBaskets;
+	private long numberOfBaskets;
 
 	public static enum FinishedCounter {
 		FINISHED
 	}
 
-	public int calcuateMinsup(final int numberOfItems, final float minsupPercent) {
+	public int calcuateMinsup(final long numberOfItems, final float minsupPercent) {
 		final float result = numberOfItems * minsupPercent;
 		return Math.round(result);
 	}
@@ -53,7 +53,7 @@ public class Apriori extends Configured implements Tool {
 			conf.set("mapred.job.tracker", "local");
 		}
 		minsup = conf.getFloat("apriori.minsup", 0);
-		numberOfBaskets = conf.getInt("apriori.baskets", 0);
+		numberOfBaskets = conf.getLong("apriori.baskets", 0);
 		if (minsup == 0) {
 			LOG.error("Provide minimum support percentage. Example: -D apriori.minsup=0.02");
 			running = false;
