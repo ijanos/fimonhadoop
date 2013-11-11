@@ -60,7 +60,7 @@ public class Automator {
 		final BufferedWriter writer = new BufferedWriter(new FileWriter(file.getAbsoluteFile()));
 
 		for (final Measure measure : measures) {
-			writer.write(measure.getCSVreportLine());
+			writer.write(measure.getCSVreportLine() + '\n');
 		}
 
 		writer.close();
