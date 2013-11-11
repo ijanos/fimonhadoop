@@ -15,6 +15,7 @@ import java.util.List;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.apache.hadoop.mapred.FileAlreadyExistsException;
 
 public class Automator {
 
@@ -36,7 +37,7 @@ public class Automator {
 		reader.close();
 	}
 
-	public void start() throws Exception {
+	public void start() {
 		for (final Measure measure : measures) {
 			measure.run();
 		}
@@ -51,7 +52,9 @@ public class Automator {
 		final File file = new File(fileName);
 
 		if (!file.exists()) {
-			file.createNewFile();
+			if (!file.createNewFile()) {
+				throw new FileAlreadyExistsException();
+			}
 		}
 
 		final BufferedWriter writer = new BufferedWriter(new FileWriter(file.getAbsoluteFile()));
@@ -63,7 +66,7 @@ public class Automator {
 		writer.close();
 	}
 
-	public static void main(final String[] args) throws Exception {
+	public static void main(final String[] args) {
 		final String fileName;
 		if (args.length < 1) {
 			LOG.warn("The first argument must be the config file name. Trying to use config.csv");
@@ -77,6 +80,8 @@ public class Automator {
 			automator.generateReport();
 		} catch (final FileNotFoundException e) {
 			LOG.error("File " + fileName + " not found");
+		} catch (final IOException e) {
+			LOG.error("IO Exception" + e);
 		}
 	}
 }

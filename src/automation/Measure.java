@@ -20,6 +20,7 @@ public class Measure {
 	private final String outputDir;
 	private final long inputSize; // the number of baskets
 	private final float minsup;
+	private boolean successful = true;
 
 	private long elapsedTime;
 
@@ -29,6 +30,10 @@ public class Measure {
 	}
 
 	public String getCSVreportLine() {
+		if (!successful) {
+			return id + ",error";
+		}
+
 		final List<String> result = new ArrayList<String>();
 
 		result.add(id);
@@ -50,7 +55,7 @@ public class Measure {
 		minsup = Float.valueOf(data[4]);
 	}
 
-	public void run() throws Exception {
+	public void run() {
 		final Configuration conf = new Configuration();
 		conf.setFloat("apriori.minsup", minsup);
 		conf.setLong("apriori.baskets", inputSize);
@@ -58,7 +63,12 @@ public class Measure {
 		final String[] args = new String[] { inputDir, outputDir };
 
 		final long startTime = System.nanoTime();
-		ToolRunner.run(conf, new Apriori(), args);
+		try {
+			ToolRunner.run(conf, new Apriori(), args);
+		} catch (final Exception e) {
+			LOG.error("Uncaught exception in Apriori:" + e);
+			successful = false;
+		}
 		elapsedTime = System.nanoTime() - startTime;
 	}
 }
