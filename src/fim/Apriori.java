@@ -16,6 +16,7 @@ import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.io.IntWritable;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapreduce.Job;
+import org.apache.hadoop.mapreduce.JobID;
 import org.apache.hadoop.mapreduce.lib.input.FileInputFormat;
 import org.apache.hadoop.mapreduce.lib.input.TextInputFormat;
 import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
@@ -39,6 +40,15 @@ public class Apriori extends Configured implements Tool {
 	private int iteration = 1;
 	private float minsup;
 	private long numberOfBaskets;
+	private final List<JobID> jobIDs;
+
+	public Apriori() {
+		jobIDs = new ArrayList<JobID>();
+	}
+
+	public List<JobID> getJobIDs() {
+		return jobIDs;
+	}
 
 	public static enum FinishedCounter {
 		FINISHED
@@ -100,6 +110,7 @@ public class Apriori extends Configured implements Tool {
 			final Job job = new Job(conf, "Iterative Apriori");
 			job.setJarByClass(Apriori.class);
 
+			jobIDs.add(job.getJobID());
 
 			if (iteration > 1) {
 				URI uri;
