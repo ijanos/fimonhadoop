@@ -43,7 +43,6 @@ public class AprioriMapper extends Mapper<LongWritable, Text, Text, IntWritable>
 		}
 
 		BufferedReader reader = null;
-		String currentLine;
 		candidateTrie = new CandidateTrie<String>();
 		final Path[] localCacheFiles = DistributedCache.getLocalCacheFiles(context.getConfiguration());
 		if (localCacheFiles.length < 1) {
@@ -51,6 +50,7 @@ public class AprioriMapper extends Mapper<LongWritable, Text, Text, IntWritable>
 		}
 		try {
 			reader = new BufferedReader(new FileReader(localCacheFiles[0].toString()));
+			String currentLine;
 			while ((currentLine = reader.readLine()) != null) {
 				candidateTrie.insert(space.split(currentLine.trim()), 0);
 			}
