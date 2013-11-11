@@ -1,6 +1,10 @@
 package fim;
 
+import java.io.IOException;
 import java.net.URI;
+import java.net.URISyntaxException;
+import java.util.ArrayList;
+import java.util.List;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -67,7 +71,7 @@ public class Apriori extends Configured implements Tool {
 		LOG.info("Number of baskets is " + numberOfBaskets);
 	}
 
-	public int run(final String[] args) throws Exception {
+	public int run(final String[] args) throws IOException {
 		final Configuration conf = getConf();
 
 		loadSettings(conf);
@@ -96,8 +100,15 @@ public class Apriori extends Configured implements Tool {
 			final Job job = new Job(conf, "Iterative Apriori");
 			job.setJarByClass(Apriori.class);
 
+
 			if (iteration > 1) {
-				final URI uri = new URI(outputBaseDir + "/Apriori-" + (iteration - 1) + "/part-r-00000");
+				URI uri;
+				try {
+					uri = new URI(outputBaseDir + "/Apriori-" + (iteration - 1) + "/part-r-00000");
+				} catch (final URISyntaxException e) {
+					LOG.error("Could not create parseable URI.\n" + e);
+					break;
+				}
 				DistributedCache.addCacheFile(uri, job.getConfiguration());
 			}
 
@@ -125,7 +136,15 @@ public class Apriori extends Configured implements Tool {
 			LOG.info("Input path: " + inputPath);
 			LOG.info("Output path: " + outputDir);
 
-			final boolean success = job.waitForCompletion(true);
+			boolean success = false;
+			try {
+				success = job.waitForCompletion(true);
+			} catch (final ClassNotFoundException e) {
+				LOG.error(e);
+			} catch (final InterruptedException e) {
+				LOG.error(e);
+			}
+
 			if (!success) {
 				LOG.error("Hadoop iteration job failed. Aborting the Apriori cumputation");
 				return 1;
