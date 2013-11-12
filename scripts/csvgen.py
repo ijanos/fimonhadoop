@@ -7,9 +7,12 @@ INPUTS = [
 
 MINSUPS = [0.05, 0.01, 0.005]
 
+OUTPUT = "/hduser/out"
+
+
 if __name__ == "__main__":
     id = 1
     for minsup in MINSUPS:
         for path, size in INPUTS:
-            print(",".join([str(x) for x in (id, path, size, minsup)]))
+            print(",".join([str(x) for x in (id, path, OUTPUT, size, minsup)]))
             id += 1
