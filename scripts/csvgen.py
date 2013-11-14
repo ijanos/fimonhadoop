@@ -12,6 +12,10 @@ OUTPUT = "/hduser/out"
 
 if __name__ == "__main__":
     id = 1
+
+    # header line
+    print("id,input,outputpath,size,minsup")
+
     for minsup in MINSUPS:
         for path, size in INPUTS:
             print(",".join([str(x) for x in (id, path, OUTPUT, size, minsup)]))
