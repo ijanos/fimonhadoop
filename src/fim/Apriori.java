@@ -15,6 +15,7 @@ import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.io.IntWritable;
 import org.apache.hadoop.io.Text;
+import org.apache.hadoop.mapred.TaskCompletionEvent;
 import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.mapreduce.JobID;
 import org.apache.hadoop.mapreduce.lib.input.FileInputFormat;
@@ -41,13 +42,19 @@ public class Apriori extends Configured implements Tool {
 	private float minsup;
 	private long numberOfBaskets;
 	private final List<JobID> jobIDs;
+	private final List<TaskCompletionEvent[]> taskCompletionEvents;
 
 	public Apriori() {
 		jobIDs = new ArrayList<JobID>();
+		taskCompletionEvents = new ArrayList<TaskCompletionEvent[]>();
 	}
 
 	public List<JobID> getJobIDs() {
 		return jobIDs;
+	}
+
+	public List<TaskCompletionEvent[]> getTakCompletionEvents() {
+		return taskCompletionEvents;
 	}
 
 	public static enum FinishedCounter {
@@ -107,7 +114,7 @@ public class Apriori extends Configured implements Tool {
 			conf.setInt("apriori.iteration", iteration);
 
 			// Create a new job
-			final Job job = new Job(conf, "Iterative Apriori");
+			final Job job = new Job(conf, "Apriori iteration " + iteration);
 			job.setJarByClass(Apriori.class);
 
 			jobIDs.add(job.getJobID());
@@ -160,6 +167,8 @@ public class Apriori extends Configured implements Tool {
 				LOG.error("Hadoop iteration job failed. Aborting the Apriori cumputation");
 				return 1;
 			}
+
+			taskCompletionEvents.add(job.getTaskCompletionEvents(0));
 
 			// If the reducer incremented the FINISHED counter that means
 			// it is finished and we can stop the iterations of the algorithm.

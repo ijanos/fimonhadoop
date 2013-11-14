@@ -61,6 +61,7 @@ public class Automator {
 
 		for (final Measure measure : measures) {
 			writer.write(measure.getCSVreportLine() + '\n');
+			measure.writeCompEvents();
 		}
 
 		writer.close();
