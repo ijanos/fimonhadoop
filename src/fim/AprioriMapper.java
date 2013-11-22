@@ -9,6 +9,8 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.regex.Pattern;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.filecache.DistributedCache;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.io.IntWritable;
@@ -17,16 +19,32 @@ import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapreduce.Mapper;
 import org.apache.hadoop.util.StringUtils;
 
+import automation.ProfileLogWriter;
+import automation.ProfileLogWriter.TaskType;
+
 public class AprioriMapper extends Mapper<LongWritable, Text, Text, IntWritable> {
 
+	private static final Log LOG = LogFactory.getLog(AprioriMapper.class);
+
+	// We use this pattern a lot, pre-compile it for faster string splits
 	private final Pattern space = Pattern.compile(" ");
 	private boolean firstRun;
 	private CandidateTrie<String> candidateTrie;
 	private int iteration;
 
+	private boolean profile;
+	private long setupTime;
+	private long mapStartTime;
+	private long mapTime;
+	private long cleanupTime;
+
 	@Override
 	public void setup(final Context context) throws IOException {
+		final long startTime = System.nanoTime();
 		iteration = context.getConfiguration().getInt("apriori.iteration", -1);
+		profile = context.getConfiguration().getBoolean("measure.profile", false);
+
+		LOG.info("Starting mapper job. Iteration: " + iteration);
 
 		switch (iteration) {
 		case -1:
@@ -39,6 +57,7 @@ public class AprioriMapper extends Mapper<LongWritable, Text, Text, IntWritable>
 		}
 
 		if (firstRun) {
+			setupTime = startTime - System.nanoTime();
 			return;
 		}
 
@@ -65,7 +84,8 @@ public class AprioriMapper extends Mapper<LongWritable, Text, Text, IntWritable>
 				reader.close();
 			}
 		}
-
+		setupTime = System.nanoTime() - startTime;
+		mapStartTime = System.nanoTime();
 	}
 
 	@Override
@@ -84,9 +104,17 @@ public class AprioriMapper extends Mapper<LongWritable, Text, Text, IntWritable>
 
 	@Override
 	protected void cleanup(final Context context) throws IOException, InterruptedException {
+		mapTime = System.nanoTime() - mapStartTime;
+		final long startTime = System.nanoTime();
 		// Write the candidate trie to the output
 		if (!firstRun) {
 			traverse(new ArrayList<String>(), candidateTrie, context);
+		}
+
+		setupTime = System.nanoTime() - startTime;
+
+		if (profile) {
+			writeProfileLogs(context);
 		}
 	}
 
@@ -120,5 +148,13 @@ public class AprioriMapper extends Mapper<LongWritable, Text, Text, IntWritable>
 				}
 			}
 		}
+	}
+
+	private void writeProfileLogs(final Context context) {
+		final ProfileLogWriter logwriter = new ProfileLogWriter(context.getConfiguration(), TaskType.MAPPER);
+		logwriter.addProperty("Mapper time", String.valueOf(mapTime));
+		logwriter.addProperty("Setup time", String.valueOf(setupTime));
+		logwriter.addProperty("Cleanup time", String.valueOf(cleanupTime));
+		logwriter.write();
 	}
 }

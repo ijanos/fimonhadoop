@@ -14,6 +14,9 @@ import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapreduce.Reducer;
 import org.apache.hadoop.util.StringUtils;
 
+import automation.ProfileLogWriter;
+import automation.ProfileLogWriter.TaskType;
+
 public class AprioriReducer extends Reducer<Text, IntWritable, Text, NullWritable> {
 
 	private static final Log LOG = LogFactory.getLog(AprioriReducer.class);
@@ -23,11 +26,19 @@ public class AprioriReducer extends Reducer<Text, IntWritable, Text, NullWritabl
 	private int iteration;
 	private List<String[]> largeItemsets;
 	private List<String[]> candidateItems;
+	private boolean profile;
+	private Long setupTime;
+	private Long countLargeItemsTime;
+	private Long candidateGenTime;
 
 	@Override
 	protected void setup(final Context context) throws IOException, InterruptedException {
+		final long startTime = System.nanoTime();
+
 		iteration = context.getConfiguration().getInt("apriori.iteration", -1);
 		minsup = context.getConfiguration().getInt("apriori.reducer.minsup", -1);
+		profile = context.getConfiguration().getBoolean("measure.profile", false);
+
 		if (minsup < 0) {
 			throw new IOException("Reducer could not read minimum support.");
 		} else if (iteration < 0) {
@@ -36,10 +47,14 @@ public class AprioriReducer extends Reducer<Text, IntWritable, Text, NullWritabl
 
 		largeItemsets = new ArrayList<String[]>();
 		LOG.info("Starting Apriori Reducer. Iteration: " + iteration + " and minum support: " + minsup);
+
+		setupTime = System.nanoTime() - startTime;
 	}
 
 	@Override
 	protected void reduce(final Text itemset, final Iterable<IntWritable> counts, final Context context) throws IOException, InterruptedException {
+		final long startTime = System.nanoTime();
+
 		int sumCount = 0;
 		for (final IntWritable count : counts) {
 			sumCount += count.get();
@@ -48,10 +63,14 @@ public class AprioriReducer extends Reducer<Text, IntWritable, Text, NullWritabl
 			largeItemsets.add(space.split(itemset.toString().trim()));
 		}
 		context.progress();
+
+		countLargeItemsTime = System.nanoTime() - startTime;
 	}
 
 	@Override
 	protected void cleanup(final Context context) throws IOException, InterruptedException {
+		final long startTime = System.nanoTime();
+
 		// Generate k+1 candidate itemsets
 		candidateItems = new ArrayList<String[]>();
 		if (iteration == 1) {
@@ -93,6 +112,12 @@ public class AprioriReducer extends Reducer<Text, IntWritable, Text, NullWritabl
 				context.write(new Text(StringUtils.join(" ", candidate)), null);
 			}
 		}
+
+		candidateGenTime = System.nanoTime() - startTime;
+
+		if (profile) {
+			writeProfileLogs(context);
+		}
 	}
 
 	/**
@@ -106,7 +131,7 @@ public class AprioriReducer extends Reducer<Text, IntWritable, Text, NullWritabl
 	 */
 	private boolean compareArrays(final String[] arr1, final String[] arr2) {
 		if (arr1.length != arr2.length) {
-			System.err.println("Array size does not match. This should not happen!");
+			LOG.error("Array size does not match. This should not happen!");
 			return false;
 		}
 		boolean result = true;
@@ -119,4 +144,11 @@ public class AprioriReducer extends Reducer<Text, IntWritable, Text, NullWritabl
 		return result;
 	}
 
+	private void writeProfileLogs(final Context context) {
+		final ProfileLogWriter logwriter = new ProfileLogWriter(context.getConfiguration(), TaskType.REDUCER);
+		logwriter.addProperty("Count large items time", String.valueOf(countLargeItemsTime));
+		logwriter.addProperty("Setup time", String.valueOf(setupTime));
+		logwriter.addProperty("Candidate generation time", String.valueOf(candidateGenTime));
+		logwriter.write();
+	}
 }

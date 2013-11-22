@@ -74,6 +74,7 @@ public class Automator {
 		} else {
 			fileName = args[0];
 		}
+
 		try {
 			final Automator automator = new Automator(fileName);
 			automator.start();

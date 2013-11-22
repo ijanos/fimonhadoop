@@ -1,2 +1,2 @@
-id,input,output,inputsize,minsup
-1,/home/apriori/100/,/home/apriori/out,100,0.2
+id,input,output,inputsize,minsup,logdir
+1,/home/apriori/100/,/home/apriori/out,100,0.2,/home/logs/

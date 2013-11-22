@@ -3,8 +3,6 @@ package fim;
 import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.util.ArrayList;
-import java.util.List;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -16,7 +14,6 @@ import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.io.IntWritable;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapreduce.Job;
-import org.apache.hadoop.mapreduce.JobID;
 import org.apache.hadoop.mapreduce.lib.input.FileInputFormat;
 import org.apache.hadoop.mapreduce.lib.input.TextInputFormat;
 import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
@@ -38,17 +35,9 @@ public class Apriori extends Configured implements Tool {
 
 	private boolean running = true;
 	private int iteration = 1;
+	private String jobid;
 	private float minsup;
 	private long numberOfBaskets;
-	private final List<JobID> jobIDs;
-
-	public Apriori() {
-		jobIDs = new ArrayList<JobID>();
-	}
-
-	public List<JobID> getJobIDs() {
-		return jobIDs;
-	}
 
 	public static enum FinishedCounter {
 		FINISHED
@@ -75,6 +64,11 @@ public class Apriori extends Configured implements Tool {
 		if (numberOfBaskets == 0) {
 			LOG.error("Provide the number of baskets. Example: -D apriori.baskets=100000");
 			running = false;
+		}
+
+		jobid = conf.get("apriori.job.id");
+		if (jobid == null) {
+			LOG.error("Missing job id");
 		}
 
 		LOG.info("Minimum support is " + minsup);
@@ -109,8 +103,6 @@ public class Apriori extends Configured implements Tool {
 			// Create a new job
 			final Job job = new Job(conf, "Iterative Apriori");
 			job.setJarByClass(Apriori.class);
-
-			jobIDs.add(job.getJobID());
 
 			if (iteration > 1) {
 				URI uri;

@@ -1,6 +1,9 @@
 package automation;
 
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 
 import org.apache.commons.logging.Log;
@@ -20,6 +23,7 @@ public class Measure {
 	private final String outputDir;
 	private final long inputSize; // the number of baskets
 	private final float minsup;
+	private final String logPath;
 	private boolean successful = true;
 
 	private long elapsedTime;
@@ -48,17 +52,24 @@ public class Measure {
 	public Measure(final String csvLine) {
 		LOG.info("Initalizing new measure with this config: " + csvLine);
 		final String[] data = csvLine.trim().split(",|;");
-		id = data[0];
+		final DateFormat dateFormat = new SimpleDateFormat("yyyyMMdd-HHmmss");
+		id = data[0] + "_" + dateFormat.format(new Date());
 		inputDir = data[1];
 		outputDir = data[2];
 		inputSize = Long.valueOf(data[3]);
 		minsup = Float.valueOf(data[4]);
+		logPath = data[5];
 	}
 
 	public void run() {
 		final Configuration conf = new Configuration();
 		conf.setFloat("apriori.minsup", minsup);
 		conf.setLong("apriori.baskets", inputSize);
+		conf.set("apriori.job.id", id);
+		conf.set("apriori.profile.logpath", logPath);
+
+		// Profile log generation is currently hardwired to be enabled
+		conf.setBoolean("measure.profile", true);
 
 		final String[] args = new String[] { inputDir, outputDir };
 
