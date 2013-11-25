@@ -1,8 +1,7 @@
-package fim;
+package fim.apriori.common;
 
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.regex.Pattern;
 
@@ -16,10 +15,11 @@ import org.apache.hadoop.util.StringUtils;
 
 import automation.ProfileLogWriter;
 import automation.ProfileLogWriter.TaskType;
+import fim.apriori.singlereduce.Apriori;
 
-public class AprioriReducer extends Reducer<Text, IntWritable, Text, NullWritable> {
+public class FirstReducer extends Reducer<Text, IntWritable, Text, NullWritable> {
 
-	private static final Log LOG = LogFactory.getLog(AprioriReducer.class);
+	private static final Log LOG = LogFactory.getLog(FirstReducer.class);
 
 	private final Pattern space = Pattern.compile(" ");
 	private int minsup;
@@ -28,12 +28,13 @@ public class AprioriReducer extends Reducer<Text, IntWritable, Text, NullWritabl
 	private List<String[]> candidateItems;
 	private boolean profile;
 	private Long setupTime;
+	private long reduceStart;
+
 	private Long countLargeItemsTime;
 	private Long candidateGenTime;
 
 	@Override
 	protected void setup(final Context context) throws IOException, InterruptedException {
-		final long startTime = System.nanoTime();
 
 		iteration = context.getConfiguration().getInt("apriori.iteration", -1);
 		minsup = context.getConfiguration().getInt("apriori.reducer.minsup", -1);
@@ -45,15 +46,19 @@ public class AprioriReducer extends Reducer<Text, IntWritable, Text, NullWritabl
 			throw new IOException("Reducer could not read iteration.");
 		}
 
-		largeItemsets = new ArrayList<String[]>();
-		LOG.info("Starting Apriori Reducer. Iteration: " + iteration + " and minum support: " + minsup);
+		if (iteration > 1) {
+			LOG.error("Called in the wrong iteration");
+			throw new IOException("Called in the wrong iteration");
+		}
 
-		setupTime = System.nanoTime() - startTime;
+		largeItemsets = new ArrayList<String[]>();
+		LOG.info("Starting Apriori reducer first iteration. Minum support: " + minsup);
+
+		reduceStart = System.nanoTime();
 	}
 
 	@Override
 	protected void reduce(final Text itemset, final Iterable<IntWritable> counts, final Context context) throws IOException, InterruptedException {
-		final long startTime = System.nanoTime();
 
 		int sumCount = 0;
 		for (final IntWritable count : counts) {
@@ -64,47 +69,27 @@ public class AprioriReducer extends Reducer<Text, IntWritable, Text, NullWritabl
 		}
 		context.progress();
 
-		countLargeItemsTime = System.nanoTime() - startTime;
 	}
 
 	@Override
 	protected void cleanup(final Context context) throws IOException, InterruptedException {
+		countLargeItemsTime = System.nanoTime() - reduceStart;
+
 		final long startTime = System.nanoTime();
 
 		// Generate k+1 candidate itemsets
 		candidateItems = new ArrayList<String[]>();
-		if (iteration == 1) {
-			for (int i = 0; i < largeItemsets.size(); i++) {
-				for (int j = i + 1; j < largeItemsets.size(); j++) {
-					if (Integer.valueOf(largeItemsets.get(i)[0]) < Integer.valueOf(largeItemsets.get(j)[0])) {
-						candidateItems.add(new String[] { largeItemsets.get(i)[0], largeItemsets.get(j)[0] });
-					} else {
-						candidateItems.add(new String[] { largeItemsets.get(j)[0], largeItemsets.get(i)[0] });
-					}
-				}
-			}
-		} else {
-			for (int i = 0; i < largeItemsets.size(); i++) {
-				for (int j = i + 1; j < largeItemsets.size(); j++) {
-					final String[] itemset1 = largeItemsets.get(i);
-					final String[] itemset2 = largeItemsets.get(j);
-					if (compareArrays(itemset1, itemset2)) {
-						final String[] itemset;
-						final String item;
-						if (Integer.valueOf(itemset1[itemset1.length - 1]) < Integer.valueOf(itemset2[itemset2.length - 1])) {
-							itemset = itemset1;
-							item = itemset2[itemset2.length - 1];
-						} else {
-							itemset = itemset2;
-							item = itemset1[itemset1.length - 1];
-						}
-						final String[] candidate = Arrays.copyOf(itemset, itemset.length + 1);
-						candidate[itemset.length] = item;
-						candidateItems.add(candidate);
-					}
+
+		for (int i = 0; i < largeItemsets.size(); i++) {
+			for (int j = i + 1; j < largeItemsets.size(); j++) {
+				if (Integer.valueOf(largeItemsets.get(i)[0]) < Integer.valueOf(largeItemsets.get(j)[0])) {
+					candidateItems.add(new String[] { largeItemsets.get(i)[0], largeItemsets.get(j)[0] });
+				} else {
+					candidateItems.add(new String[] { largeItemsets.get(j)[0], largeItemsets.get(i)[0] });
 				}
 			}
 		}
+
 		if (candidateItems.isEmpty()) {
 			context.getCounter(Apriori.FinishedCounter.FINISHED).increment(1);
 		} else {
@@ -118,30 +103,6 @@ public class AprioriReducer extends Reducer<Text, IntWritable, Text, NullWritabl
 		if (profile) {
 			writeProfileLogs(context);
 		}
-	}
-
-	/**
-	 * 
-	 * @param arr1
-	 *            Array 1
-	 * @param arr2
-	 *            Array 2
-	 * @return true if the the arrays first n-1 elements are the same where n is
-	 *         the array length.
-	 */
-	private boolean compareArrays(final String[] arr1, final String[] arr2) {
-		if (arr1.length != arr2.length) {
-			LOG.error("Array size does not match. This should not happen!");
-			return false;
-		}
-		boolean result = true;
-		for (int i = 0; i < arr1.length - 1; i++) {
-			if (!arr1[i].equals(arr2[i])) {
-				result = false;
-				break;
-			}
-		}
-		return result;
 	}
 
 	private void writeProfileLogs(final Context context) {

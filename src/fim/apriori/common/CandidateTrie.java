@@ -1,4 +1,4 @@
-package fim;
+package fim.apriori.common;
 
 import java.util.HashMap;
 import java.util.Set;

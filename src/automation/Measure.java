@@ -12,7 +12,7 @@ import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.util.StringUtils;
 import org.apache.hadoop.util.ToolRunner;
 
-import fim.Apriori;
+import fim.apriori.singlereduce.Apriori;
 
 public class Measure {
 

@@ -1,4 +1,4 @@
-package fim;
+package fim.apriori.singlereduce;
 
 import java.io.IOException;
 import java.net.URI;
@@ -20,6 +20,10 @@ import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
 import org.apache.hadoop.mapreduce.lib.output.TextOutputFormat;
 import org.apache.hadoop.util.Tool;
 import org.apache.hadoop.util.ToolRunner;
+
+import fim.apriori.common.FirstMapper;
+import fim.apriori.common.FirstReducer;
+import fim.apriori.common.GeneralMapper;
 
 /**
  * 
@@ -116,8 +120,13 @@ public class Apriori extends Configured implements Tool {
 			}
 
 			// Setup mapper and reducer
-			job.setMapperClass(AprioriMapper.class);
-			job.setReducerClass(AprioriReducer.class);
+			if (iteration == 1) {
+				job.setMapperClass(FirstMapper.class);
+				job.setReducerClass(FirstReducer.class);
+			} else {
+				job.setMapperClass(GeneralMapper.class);
+				job.setReducerClass(SingleReducer.class);
+			}
 
 			// Specify key / value
 			job.setOutputKeyClass(Text.class);
