@@ -24,10 +24,8 @@ public class ProfileLogWriter {
 	private final int iteration;
 
 	public static enum TaskType {
-		MAPPER, REDUCER
+		MAPPER, REDUCER, MRJOB
 	}
-
-	// private final fileName;
 
 	public ProfileLogWriter(final Configuration conf, final TaskType type) {
 		properties = new HashMap<String, String>();
@@ -37,7 +35,6 @@ public class ProfileLogWriter {
 		logpath = conf.get("apriori.profile.logpath");
 		iteration = conf.getInt("apriori.iteration", -1);
 		initHDFS();
-
 	}
 
 	public void addProperty(final String name, final String value) {
@@ -70,18 +67,22 @@ public class ProfileLogWriter {
 		}
 
 		final String postfix;
+
 		switch (taskType) {
 		case MAPPER:
-			postfix = "mapper";
+			postfix = "iter" + iteration + "_" + hostname + "_mapper";
 			break;
 		case REDUCER:
-			postfix = "reducer";
+			postfix = "iter" + iteration + "_" + hostname + "_reducer";
+			break;
+		case MRJOB:
+			postfix = "jobcontroller_" + hostname;
 			break;
 		default:
 			postfix = "unkown";
 		}
 
-		final String filename = aprioriJobID + "_" + "iter-" + iteration + "_" + hostname + "_" + postfix;
+		final String filename = aprioriJobID + "_" + postfix;
 		final Path logFilePath = new Path(logpath + filename);
 		try {
 			fs = FileSystem.get(conf);
