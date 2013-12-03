@@ -27,7 +27,6 @@ public class FirstReducer extends Reducer<Text, IntWritable, Text, NullWritable>
 	private List<String[]> largeItemsets;
 	private List<String[]> candidateItems;
 	private boolean profile;
-	private Long setupTime;
 	private long reduceStart;
 
 	private Long countLargeItemsTime;
@@ -108,7 +107,6 @@ public class FirstReducer extends Reducer<Text, IntWritable, Text, NullWritable>
 	private void writeProfileLogs(final Context context) {
 		final ProfileLogWriter logwriter = new ProfileLogWriter(context.getConfiguration(), TaskType.REDUCER);
 		logwriter.addProperty("Count large items time", String.valueOf(countLargeItemsTime));
-		logwriter.addProperty("Setup time", String.valueOf(setupTime));
 		logwriter.addProperty("Candidate generation time", String.valueOf(candidateGenTime));
 		logwriter.write();
 	}
