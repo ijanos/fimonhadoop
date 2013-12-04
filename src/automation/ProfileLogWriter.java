@@ -22,6 +22,7 @@ public class ProfileLogWriter {
 	private final TaskType taskType;
 	private final String logpath;
 	private final int iteration;
+	private String hostname;
 
 	public static enum TaskType {
 		MAPPER, REDUCER, MRJOB
@@ -34,6 +35,14 @@ public class ProfileLogWriter {
 		aprioriJobID = conf.get("apriori.job.id");
 		logpath = conf.get("apriori.profile.logpath");
 		iteration = conf.getInt("apriori.iteration", -1);
+
+		try {
+			hostname = java.net.InetAddress.getLocalHost().getHostName();
+		} catch (final UnknownHostException e) {
+			LOG.warn("Could not find hostname.");
+			hostname = "UNKOWN_HOST";
+		}
+
 		initHDFS();
 	}
 
@@ -43,7 +52,7 @@ public class ProfileLogWriter {
 
 	public void write() {
 		for (final String key : properties.keySet()) {
-			final String line = aprioriJobID + ";" + iteration + ";" + key + "=" + properties.get(key) + "\n";
+			final String line = aprioriJobID + ";" + hostname + ";" + taskType + ";" + iteration + ";" + key + ";" + properties.get(key) + "\n";
 			try {
 				outputstream.write(line.getBytes("UTF-8"));
 			} catch (final IOException e) {
@@ -58,14 +67,6 @@ public class ProfileLogWriter {
 	}
 
 	private void initHDFS() {
-		String hostname;
-		try {
-			hostname = java.net.InetAddress.getLocalHost().getHostName();
-		} catch (final UnknownHostException e) {
-			LOG.warn("Could not find hostname.");
-			hostname = "UNKOWN_HOST";
-		}
-
 		final String postfix;
 
 		switch (taskType) {
@@ -83,7 +84,7 @@ public class ProfileLogWriter {
 		}
 
 		final String filename = aprioriJobID + "_" + postfix;
-		final Path logFilePath = new Path(logpath + filename);
+		final Path logFilePath = new Path(logpath + "/" + filename);
 		try {
 			fs = FileSystem.get(conf);
 			outputstream = fs.create(logFilePath);

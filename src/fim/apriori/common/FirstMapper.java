@@ -24,11 +24,9 @@ public class FirstMapper extends Mapper<LongWritable, Text, Text, IntWritable> {
 
 	@Override
 	public void setup(final Context context) throws IOException {
-		profile = context.getConfiguration().getBoolean("measure.profile", false);
-
-		LOG.info("Starting mapper. First iteration.");
-
 		mapStartTime = System.nanoTime();
+		profile = context.getConfiguration().getBoolean("measure.profile", false);
+		LOG.info("Starting mapper. First iteration.");
 	}
 
 	@Override
@@ -53,7 +51,7 @@ public class FirstMapper extends Mapper<LongWritable, Text, Text, IntWritable> {
 
 	private void writeProfileLogs(final Context context) {
 		final ProfileLogWriter logwriter = new ProfileLogWriter(context.getConfiguration(), TaskType.MAPPER);
-		logwriter.addProperty("Mapper time", String.valueOf(mapTime));
+		logwriter.addProperty("complete map time", String.valueOf(mapTime));
 		logwriter.write();
 	}
 }

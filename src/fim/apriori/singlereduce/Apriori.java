@@ -181,7 +181,7 @@ public class Apriori extends Configured implements Tool {
 				running = false;
 			}
 
-			profileTimes.put("Iteration-" + iteration, String.valueOf(System.nanoTime() - startTime));
+			profileTimes.put("iteration-" + iteration, String.valueOf(System.nanoTime() - startTime));
 
 			iteration++;
 		}

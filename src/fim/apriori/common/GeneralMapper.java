@@ -36,10 +36,12 @@ public class GeneralMapper extends Mapper<LongWritable, Text, Text, IntWritable>
 	private long mapTime;
 	private long mapStartTime;
 	private long cleanupTime;
+	private long fullMapperTime;
+	private long fullMapperStartTime;
 
 	@Override
 	public void setup(final Context context) throws IOException {
-		final long startTime = System.nanoTime();
+		fullMapperStartTime = System.nanoTime();
 		iteration = context.getConfiguration().getInt("apriori.iteration", -1);
 		profile = context.getConfiguration().getBoolean("measure.profile", false);
 
@@ -69,7 +71,7 @@ public class GeneralMapper extends Mapper<LongWritable, Text, Text, IntWritable>
 			}
 		}
 
-		candidateTrieBuldingTime = System.nanoTime() - startTime;
+		candidateTrieBuldingTime = System.nanoTime() - fullMapperStartTime;
 		mapStartTime = System.nanoTime();
 	}
 
@@ -86,12 +88,13 @@ public class GeneralMapper extends Mapper<LongWritable, Text, Text, IntWritable>
 	protected void cleanup(final Context context) throws IOException, InterruptedException {
 		mapTime = System.nanoTime() - mapStartTime;
 		final long startTime = System.nanoTime();
-		// Write the candidate trie to the output
 
+		// Write the candidate trie to the output
 		traverse(new ArrayList<String>(), candidateTrie, context);
 
 		cleanupTime = System.nanoTime() - startTime;
 
+		fullMapperTime = System.nanoTime() - fullMapperStartTime;
 		if (profile) {
 			writeProfileLogs(context);
 		}
@@ -131,9 +134,10 @@ public class GeneralMapper extends Mapper<LongWritable, Text, Text, IntWritable>
 
 	private void writeProfileLogs(final Context context) {
 		final ProfileLogWriter logwriter = new ProfileLogWriter(context.getConfiguration(), TaskType.MAPPER);
-		logwriter.addProperty("Mapper time", String.valueOf(mapTime));
-		logwriter.addProperty("Setup time", String.valueOf(candidateTrieBuldingTime));
-		logwriter.addProperty("Cleanup time", String.valueOf(cleanupTime));
+		logwriter.addProperty("mapping time", String.valueOf(mapTime));
+		logwriter.addProperty("candidate trie building time", String.valueOf(candidateTrieBuldingTime));
+		logwriter.addProperty("trie traverse time", String.valueOf(cleanupTime));
+		logwriter.addProperty("full mapper time", String.valueOf(fullMapperTime));
 		logwriter.write();
 	}
 }

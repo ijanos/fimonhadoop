@@ -29,11 +29,14 @@ public class FirstReducer extends Reducer<Text, IntWritable, Text, NullWritable>
 	private boolean profile;
 	private long reduceStart;
 
-	private Long countLargeItemsTime;
-	private Long candidateGenTime;
+	private long countLargeItemsTime;
+	private long candidateGenTime;
+	private long completeReduceTime;
+	private long completeReduceStartTime;
 
 	@Override
 	protected void setup(final Context context) throws IOException, InterruptedException {
+		completeReduceStartTime = System.nanoTime();
 
 		iteration = context.getConfiguration().getInt("apriori.iteration", -1);
 		minsup = context.getConfiguration().getInt("apriori.reducer.minsup", -1);
@@ -98,7 +101,7 @@ public class FirstReducer extends Reducer<Text, IntWritable, Text, NullWritable>
 		}
 
 		candidateGenTime = System.nanoTime() - startTime;
-
+		completeReduceTime = System.nanoTime() - completeReduceStartTime;
 		if (profile) {
 			writeProfileLogs(context);
 		}
@@ -106,8 +109,9 @@ public class FirstReducer extends Reducer<Text, IntWritable, Text, NullWritable>
 
 	private void writeProfileLogs(final Context context) {
 		final ProfileLogWriter logwriter = new ProfileLogWriter(context.getConfiguration(), TaskType.REDUCER);
-		logwriter.addProperty("Count large items time", String.valueOf(countLargeItemsTime));
-		logwriter.addProperty("Candidate generation time", String.valueOf(candidateGenTime));
+		logwriter.addProperty("large item counting time", String.valueOf(countLargeItemsTime));
+		logwriter.addProperty("candidate generation time", String.valueOf(candidateGenTime));
+		logwriter.addProperty("complete reduce time", String.valueOf(completeReduceTime));
 		logwriter.write();
 	}
 }
