@@ -32,6 +32,7 @@ public class SingleReducer extends Reducer<Text, IntWritable, Text, NullWritable
 	private long candidateGenTime;
 	private long completeReduceTime;
 	private long completeReduceStartTime;
+	private long countStartTime;
 
 	@Override
 	protected void setup(final Context context) throws IOException, InterruptedException {
@@ -49,11 +50,11 @@ public class SingleReducer extends Reducer<Text, IntWritable, Text, NullWritable
 		largeItemsets = new ArrayList<String[]>();
 		LOG.info("Starting Apriori Reducer. Iteration: " + iteration + " and minum support: " + minsup);
 
+		countStartTime = System.nanoTime();
 	}
 
 	@Override
 	protected void reduce(final Text itemset, final Iterable<IntWritable> counts, final Context context) throws IOException, InterruptedException {
-		final long startTime = System.nanoTime();
 
 		int sumCount = 0;
 		for (final IntWritable count : counts) {
@@ -64,11 +65,11 @@ public class SingleReducer extends Reducer<Text, IntWritable, Text, NullWritable
 		}
 		context.progress();
 
-		countLargeItemsTime = System.nanoTime() - startTime;
 	}
 
 	@Override
 	protected void cleanup(final Context context) throws IOException, InterruptedException {
+		countLargeItemsTime = System.nanoTime() - countStartTime;
 		final long startTime = System.nanoTime();
 
 		// Generate k+1 candidate itemsets
