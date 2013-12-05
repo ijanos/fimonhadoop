@@ -36,7 +36,7 @@ public class GeneralMapper extends Mapper<LongWritable, Text, Text, IntWritable>
 	private long mapTime;
 	private long mapStartTime;
 	private long cleanupTime;
-	private long fullMapperTime;
+	private long completeMapperTime;
 	private long fullMapperStartTime;
 
 	@Override
@@ -94,7 +94,7 @@ public class GeneralMapper extends Mapper<LongWritable, Text, Text, IntWritable>
 
 		cleanupTime = System.nanoTime() - startTime;
 
-		fullMapperTime = System.nanoTime() - fullMapperStartTime;
+		completeMapperTime = System.nanoTime() - fullMapperStartTime;
 		if (profile) {
 			writeProfileLogs(context);
 		}
@@ -137,7 +137,7 @@ public class GeneralMapper extends Mapper<LongWritable, Text, Text, IntWritable>
 		logwriter.addProperty("mapping time", String.valueOf(mapTime));
 		logwriter.addProperty("candidate trie building time", String.valueOf(candidateTrieBuldingTime));
 		logwriter.addProperty("trie traverse time", String.valueOf(cleanupTime));
-		logwriter.addProperty("full mapper time", String.valueOf(fullMapperTime));
+		logwriter.addProperty("complete mapper time", String.valueOf(completeMapperTime));
 		logwriter.write();
 	}
 }
