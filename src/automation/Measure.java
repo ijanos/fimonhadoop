@@ -74,12 +74,18 @@ public class Measure {
 		final String[] args = new String[] { inputDir, outputDir };
 
 		final long startTime = System.nanoTime();
+		final Apriori apriori = new Apriori();
 		try {
-			ToolRunner.run(conf, new Apriori(), args);
+			ToolRunner.run(conf, apriori, args);
 		} catch (final Exception e) {
 			LOG.error("Uncaught exception in Apriori:" + e);
 			successful = false;
 		}
+
+		if (!apriori.isSuccessfull()) {
+			successful = false;
+		}
+
 		elapsedTime = System.nanoTime() - startTime;
 	}
 }

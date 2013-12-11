@@ -47,6 +47,12 @@ public class Apriori extends Configured implements Tool {
 	private long numberOfBaskets;
 	private final HashMap<String, String> profileTimes;
 
+	private boolean success = false;
+
+	public boolean isSuccessfull() {
+		return success;
+	}
+
 	public static enum FinishedCounter {
 		FINISHED
 	}
@@ -185,6 +191,7 @@ public class Apriori extends Configured implements Tool {
 
 			iteration++;
 		}
+		success = true;
 
 		writeProfileLogs(conf);
 
