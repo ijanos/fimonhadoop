@@ -82,7 +82,7 @@ public class SingleReducer extends Reducer<Text, IntWritable, Text, NullWritable
 				if (compareArrays(itemset1, itemset2)) {
 					final String[] itemset;
 					final String item;
-					if (Integer.valueOf(itemset1[itemset1.length - 1]) < Integer.valueOf(itemset2[itemset2.length - 1])) {
+					if (Integer.parseInt(itemset1[itemset1.length - 1]) < Integer.parseInt(itemset2[itemset2.length - 1])) {
 						itemset = itemset1;
 						item = itemset2[itemset2.length - 1];
 					} else {
