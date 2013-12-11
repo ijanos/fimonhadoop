@@ -170,7 +170,7 @@ public class Apriori extends Configured implements Tool {
 			}
 
 			if (!success) {
-				LOG.error("Hadoop iteration job failed. Aborting the Apriori cumputation");
+				LOG.error("Hadoop iteration job failed. Aborting the Apriori computation");
 				return 1;
 			}
 
