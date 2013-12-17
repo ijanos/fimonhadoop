@@ -22,6 +22,9 @@ public class FirstMapper extends Mapper<LongWritable, Text, Text, IntWritable> {
 	private long mapTime;
 	private long mapStartTime;
 
+	private final IntWritable one = new IntWritable(1);
+	private final Text text = new Text();
+
 	@Override
 	public void setup(final Context context) throws IOException {
 		mapStartTime = System.nanoTime();
@@ -35,7 +38,8 @@ public class FirstMapper extends Mapper<LongWritable, Text, Text, IntWritable> {
 
 		// i starts from 1 because the first element is the basket id
 		for (int i = 1; i < items.length; i++) {
-			context.write(new Text(items[i]), new IntWritable(1));
+			text.set(items[i]);
+			context.write(text, one);
 		}
 
 	}

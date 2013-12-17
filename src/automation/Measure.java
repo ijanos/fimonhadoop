@@ -56,7 +56,7 @@ public class Measure {
 		id = data[0] + "_" + dateFormat.format(new Date());
 		inputDir = data[1];
 		outputDir = data[2];
-		inputSize = Long.valueOf(data[3]);
+		inputSize = Long.parseLong(data[3]);
 		minsup = Float.valueOf(data[4]);
 		logPath = data[5];
 	}

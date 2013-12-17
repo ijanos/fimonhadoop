@@ -39,6 +39,9 @@ public class GeneralMapper extends Mapper<LongWritable, Text, Text, IntWritable>
 	private long completeMapperTime;
 	private long fullMapperStartTime;
 
+	private final Text text = new Text();
+	private final IntWritable intw = new IntWritable();
+
 	@Override
 	public void setup(final Context context) throws IOException {
 		fullMapperStartTime = System.nanoTime();
@@ -102,7 +105,9 @@ public class GeneralMapper extends Mapper<LongWritable, Text, Text, IntWritable>
 
 	public void traverse(final List<String> path, final CandidateTrie<String> node, final Context context) throws IOException, InterruptedException {
 		if (node.isLeaf()) {
-			context.write(new Text(StringUtils.join(" ", path)), new IntWritable(node.getCount()));
+			text.set(StringUtils.join(" ", path));
+			intw.set(node.getCount());
+			context.write(text, intw);
 		} else {
 			for (final String child : node.getChildren()) {
 				final List<String> newPath = new ArrayList<String>(path);
