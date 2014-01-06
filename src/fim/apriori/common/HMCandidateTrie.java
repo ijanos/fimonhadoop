@@ -1,22 +1,23 @@
 package fim.apriori.common;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Set;
 
-public class CandidateTrie<T> {
+public class HMCandidateTrie<T> {
 
-	private final HashMap<T, CandidateTrie<T>> children;
+	private final HashMap<T, HMCandidateTrie<T>> children;
 	private int count = -1;
 
-	public CandidateTrie() {
-		children = new HashMap<T, CandidateTrie<T>>();
+	public HMCandidateTrie() {
+		children = new HashMap<T, HMCandidateTrie<T>>();
 	}
 
 	public boolean contains(final T item) {
 		return children.containsKey(item);
 	}
 
-	public CandidateTrie<T> get(final T item) {
+	public HMCandidateTrie<T> get(final T item) {
 		if (children.containsKey(item)) {
 			return children.get(item);
 		} else {
@@ -24,8 +25,8 @@ public class CandidateTrie<T> {
 		}
 	}
 
-	public CandidateTrie<T> find(final T[] items) {
-		CandidateTrie<T> node = this;
+	public HMCandidateTrie<T> find(final List<T> items) {
+		HMCandidateTrie<T> node = this;
 		for (final T item : items) {
 			if (node.children.containsKey(item)) {
 				node = node.children.get(item);
@@ -53,7 +54,7 @@ public class CandidateTrie<T> {
 	}
 
 	public void insert(final T[] items, final int value) {
-		CandidateTrie<T> node = this;
+		HMCandidateTrie<T> node = this;
 		int i = 0;
 		final int n = items.length;
 
@@ -71,7 +72,7 @@ public class CandidateTrie<T> {
 		}
 
 		while (i < n) {
-			node.children.put(items[i], new CandidateTrie<T>());
+			node.children.put(items[i], new HMCandidateTrie<T>());
 			node = node.children.get(items[i]);
 			i = i + 1;
 		}

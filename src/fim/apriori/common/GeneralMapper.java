@@ -21,6 +21,8 @@ import org.apache.hadoop.util.StringUtils;
 
 import automation.ProfileLogWriter;
 import automation.ProfileLogWriter.TaskType;
+import fim.apriori.common.trie.CandidateTrie;
+import fim.apriori.common.trie.Node;
 
 public class GeneralMapper extends Mapper<LongWritable, Text, Text, IntWritable> {
 
@@ -28,7 +30,8 @@ public class GeneralMapper extends Mapper<LongWritable, Text, Text, IntWritable>
 
 	// We use this pattern a lot, pre-compile it for faster string splits
 	private final Pattern space = Pattern.compile(" ");
-	private CandidateTrie<String> candidateTrie;
+	// private CandidateTrie<String> candidateTrie;
+	private CandidateTrie candidateTrie;
 	private int iteration;
 	private boolean profile;
 
@@ -44,6 +47,7 @@ public class GeneralMapper extends Mapper<LongWritable, Text, Text, IntWritable>
 
 	@Override
 	public void setup(final Context context) throws IOException {
+		LOG.info("Starting SETUP");
 		fullMapperStartTime = System.nanoTime();
 		iteration = context.getConfiguration().getInt("apriori.iteration", -1);
 		profile = context.getConfiguration().getBoolean("measure.profile", false);
@@ -51,7 +55,7 @@ public class GeneralMapper extends Mapper<LongWritable, Text, Text, IntWritable>
 		LOG.info("Starting mapper. Iteration: " + iteration);
 
 		BufferedReader reader = null;
-		candidateTrie = new CandidateTrie<String>();
+		candidateTrie = new CandidateTrie();
 		final Path[] localCacheFiles = DistributedCache.getLocalCacheFiles(context.getConfiguration());
 		if (localCacheFiles.length < 1) {
 			throw new IOException("Could not read candidates file");
@@ -59,9 +63,12 @@ public class GeneralMapper extends Mapper<LongWritable, Text, Text, IntWritable>
 		try {
 			reader = new BufferedReader(new FileReader(localCacheFiles[0].toString()));
 			String currentLine;
+			LOG.info("Start reading candidates line by line");
 			while ((currentLine = reader.readLine()) != null) {
-				candidateTrie.insert(space.split(currentLine.trim()), 0);
+				context.progress();
+				candidateTrie.insert(space.split(currentLine.trim()));
 			}
+			LOG.info("Finished reading candidates");
 		} catch (final FileNotFoundException e) {
 			System.err.println("Could not open the candidates file");
 			throw e;
@@ -80,9 +87,9 @@ public class GeneralMapper extends Mapper<LongWritable, Text, Text, IntWritable>
 
 	@Override
 	public void map(final LongWritable key, final Text line, final Context context) throws IOException, InterruptedException {
-		final String[] items = space.split(line.toString().trim());
+		final ArrayList<String> list = new ArrayList<String>(Arrays.asList(space.split(line.toString().trim())));
 
-		incrementCount(candidateTrie, Arrays.copyOfRange(items, 1, items.length), iteration);
+		incrementCount(candidateTrie.getRoot(), list.subList(1, list.size()), iteration);
 		context.progress();
 
 	}
@@ -93,7 +100,7 @@ public class GeneralMapper extends Mapper<LongWritable, Text, Text, IntWritable>
 		final long startTime = System.nanoTime();
 
 		// Write the candidate trie to the output
-		traverse(new ArrayList<String>(), candidateTrie, context);
+		traverse(new ArrayList<String>(), candidateTrie.getRoot(), context);
 
 		cleanupTime = System.nanoTime() - startTime;
 
@@ -103,35 +110,37 @@ public class GeneralMapper extends Mapper<LongWritable, Text, Text, IntWritable>
 		}
 	}
 
-	public void traverse(final List<String> path, final CandidateTrie<String> node, final Context context) throws IOException, InterruptedException {
-		if (node.isLeaf()) {
+	public void traverse(final List<String> path, final Node<String> node, final Context context) throws IOException, InterruptedException {
+		if (node.isEnd()) {
 			text.set(StringUtils.join(" ", path));
 			intw.set(node.getCount());
 			context.write(text, intw);
 		} else {
-			for (final String child : node.getChildren()) {
+			for (final Node<String> child : node.getChildren()) {
 				final List<String> newPath = new ArrayList<String>(path);
-				newPath.add(child);
-				traverse(newPath, node.get(child), context);
+				newPath.add(child.getValue());
+				traverse(newPath, child, context);
 			}
 		}
 	}
 
-	public void incrementCount(final CandidateTrie<String> trie, final String[] items, final int depth) {
-		if (items.length < depth) {
+	public void incrementCount(final Node<String> node, final List<String> items, final int depth) {
+		if (items.size() < depth) {
 			return;
 		}
 
 		if (depth > 1) {
-			for (int i = 0; i < items.length; i++) {
-				if (trie.contains(items[i])) {
-					incrementCount(trie.get(items[i]), Arrays.copyOfRange(items, i + 1, items.length), depth - 1);
+			for (int i = 0; i < items.size(); i++) {
+				final Node<String> child = node.findChild(items.get(i));
+				if (child != null) {
+					incrementCount(child, items.subList(i + 1, items.size()), depth - 1);
 				}
 			}
 		} else {
 			for (final String item : items) {
-				if (trie.contains(item)) {
-					trie.get(item).increment();
+				final Node<String> child = node.findChild(item);
+				if (child != null) {
+					child.increment();
 				}
 			}
 		}

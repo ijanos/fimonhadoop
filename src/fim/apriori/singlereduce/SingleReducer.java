@@ -99,8 +99,10 @@ public class SingleReducer extends Reducer<Text, IntWritable, Text, NullWritable
 		if (candidateItems.isEmpty()) {
 			context.getCounter(Apriori.FinishedCounter.FINISHED).increment(1);
 		} else {
+			final Text text = new Text();
 			for (final String[] candidate : candidateItems) {
-				context.write(new Text(StringUtils.join(" ", candidate)), null);
+				text.set(StringUtils.join(" ", candidate));
+				context.write(text, null);
 			}
 		}
 

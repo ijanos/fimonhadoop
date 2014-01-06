@@ -26,6 +26,7 @@ public class LargeitemsetReducer extends Reducer<Text, IntWritable, Text, Text> 
 	protected void setup(final Context context) throws IOException, InterruptedException {
 		iteration = context.getConfiguration().getInt("apriori.iteration", -1);
 		minsup = context.getConfiguration().getInt("apriori.reducer.minsup", -1);
+
 		if (minsup < 0) {
 			throw new IOException("Reducer could not read minimum support.");
 		} else if (iteration < 0) {
@@ -52,13 +53,11 @@ public class LargeitemsetReducer extends Reducer<Text, IntWritable, Text, Text> 
 	protected void cleanup(final Context context) throws IOException, InterruptedException {
 		for (final String largeitemset : largeItemsets) {
 			final String[] items = space.split(largeitemset.trim());
-			if (items.length > 1) {
-				final String lastItem = items[items.length - 1];
-				final String key = StringUtils.join(" ", (String[]) ArrayUtils.remove(items, items.length - 1));
-				context.write(new Text(key), new Text(lastItem));
-			} else {
-				// TODO what to do when only one item is large
-			}
+
+			final String lastItem = items[items.length - 1];
+			final String key = StringUtils.join(" ", (String[]) ArrayUtils.remove(items, items.length - 1));
+			context.write(new Text(key), new Text(lastItem));
+
 		}
 	}
 }
