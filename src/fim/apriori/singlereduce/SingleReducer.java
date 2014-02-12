@@ -77,6 +77,7 @@ public class SingleReducer extends Reducer<Text, IntWritable, Text, NullWritable
 
 		for (int i = 0; i < largeItemsets.size(); i++) {
 			for (int j = i + 1; j < largeItemsets.size(); j++) {
+				context.progress();
 				final String[] itemset1 = largeItemsets.get(i);
 				final String[] itemset2 = largeItemsets.get(j);
 				if (compareArrays(itemset1, itemset2)) {
