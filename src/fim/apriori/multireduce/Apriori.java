@@ -1,9 +1,8 @@
-package fim.apriori.singlereduce;
+package fim.apriori.multireduce;
 
 import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.util.HashMap;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -22,19 +21,19 @@ import org.apache.hadoop.mapreduce.lib.output.TextOutputFormat;
 import org.apache.hadoop.util.Tool;
 import org.apache.hadoop.util.ToolRunner;
 
-import automation.ProfileLogWriter;
-import automation.ProfileLogWriter.TaskType;
 import fim.apriori.common.FirstMapper;
 import fim.apriori.common.FirstReducer;
 import fim.apriori.common.GeneralMapper;
+import fim.apriori.singlereduce.SingleReducer;
 
 /**
- *
- * Hadoop mapreduce implementation of the Apriori algorithm.
- *
- *
+ * 
+ * Hadoop mapreduce implementation of the Apriori algorithm, with multiple
+ * reducers.
+ * 
+ * 
  * @author János Illés
- *
+ * 
  */
 public class Apriori extends Configured implements Tool {
 
@@ -45,20 +44,9 @@ public class Apriori extends Configured implements Tool {
 	private String jobid;
 	private float minsup;
 	private long numberOfBaskets;
-	private final HashMap<String, String> profileTimes;
-
-	private boolean success = false;
-
-	public boolean isSuccessfull() {
-		return success;
-	}
 
 	public static enum FinishedCounter {
 		FINISHED
-	}
-
-	public Apriori() {
-		profileTimes = new HashMap<String, String>();
 	}
 
 	public int calcuateMinsup(final long numberOfItems, final float minsupPercent) {
@@ -115,11 +103,7 @@ public class Apriori extends Configured implements Tool {
 			hdfs.delete(outputBasePath, true);
 		}
 
-		long startTime;
-
 		while (running) {
-			startTime = System.nanoTime();
-
 			conf.setInt("apriori.iteration", iteration);
 
 			// Create a new job
@@ -187,23 +171,10 @@ public class Apriori extends Configured implements Tool {
 				running = false;
 			}
 
-			profileTimes.put("iteration-" + iteration, String.valueOf(System.nanoTime() - startTime));
-
 			iteration++;
 		}
-		success = true;
-
-		writeProfileLogs(conf);
 
 		return 0;
-	}
-
-	private void writeProfileLogs(final Configuration conf) {
-		final ProfileLogWriter logwriter = new ProfileLogWriter(conf, TaskType.MRJOB);
-		for (final String key : profileTimes.keySet()) {
-			logwriter.addProperty(key, profileTimes.get(key));
-		}
-		logwriter.write();
 	}
 
 	public static void main(final String[] args) throws Exception {

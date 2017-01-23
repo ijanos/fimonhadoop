@@ -36,7 +36,12 @@ public class Automator {
 		}
 		reader.close();
 	}
-
+    /**
+    * Start the all the measurements.
+    *
+    * A new measurement will start when the previous finished. The order
+    * is the same as specified in the config.csv file.
+    */
 	public void start() {
 		for (final Measure measure : measures) {
 			measure.run();
